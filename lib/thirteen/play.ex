@@ -3,7 +3,7 @@ defmodule Thirteen.Play do
   API to play game.
   """
 
-  alias Thirteen.{Game, Thirteen, Validator}
+  alias Thirteen.{Game, Thirteen}
   def new(name), do: {:ok, Thirteen.new(name)}
   def new_test_game(name), do: {:ok, Thirteen.new_test_game(name)}
 

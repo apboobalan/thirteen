@@ -1,4 +1,7 @@
 defmodule ThirteenTest do
+  @moduledoc """
+  Thirteen game test.
+  """
   use ExUnit.Case
   doctest Thirteen
 

@@ -62,6 +62,6 @@ defmodule Thirteen.Thirteen do
   end
 
   def show_result(game) do
-    game |> Game.change_state(:finished)
+    game |> Game.set_state(:finished)
   end
 end

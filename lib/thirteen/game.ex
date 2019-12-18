@@ -20,15 +20,21 @@ defmodule Thirteen.Game do
   @doc """
   New Game.
   """
-  def new(name), do: %__MODULE__{name: name}
-def new, do: %__MODULE__{}
+  def new(name), do: new() |> set_name(name)
+
+  def new, do: %__MODULE__{}
   def set_name(game, name), do: game |> Map.put(:name, name)
   def set_players(game, players), do: game |> Map.put(:players, players)
   def set_in_hands(game, in_hands), do: game |> Map.put(:in_hands, in_hands)
   def set_hands(game, hands), do: game |> Map.put(:hands, hands)
   def set_cards(game, cards), do: game |> Map.put(:cards, cards)
-  def set_remaining_cards(game, remaining_cards), do: game |> Map.put(:remaining_cards, remaining_cards)
-  def set_remaining_bets(game, remaining_bets), do: game |> Map.put(:remaining_bets, remaining_bets)
+
+  def set_remaining_cards(game, remaining_cards),
+    do: game |> Map.put(:remaining_cards, remaining_cards)
+
+  def set_remaining_bets(game, remaining_bets),
+    do: game |> Map.put(:remaining_bets, remaining_bets)
+
   def set_playing_hand(game, playing_hand), do: game |> Map.put(:playing_hand, playing_hand)
   def set_on_table(game, on_table), do: game |> Map.put(:on_table, on_table)
   def set_state(game, state), do: game |> Map.put(:state, state)
@@ -51,8 +57,8 @@ def new, do: %__MODULE__{}
   @doc """
   New Test Game.
   """
-  def new_test_game(name), do: %__MODULE__{name: name, deck_module: MockDeck}
-  def start_joining(game), do: game |> change_state(:join)
+  def new_test_game(name), do: new(name) |> set_deck_module(MockDeck)
+  def start_joining(game), do: game |> set_state(:join)
 
   @doc """
   Join Game.
@@ -80,10 +86,8 @@ def new, do: %__MODULE__{}
   def start(game), do: game |> add_hands
 
   defp add_hands(game) do
-    %__MODULE__{
-      game
-      | in_hands: 1..game.hands |> Enum.reduce(%{}, &(&2 |> Map.put(&1, Hand.new())))
-    }
+    game
+    |> set_in_hands(1..game.hands |> Enum.reduce(%{}, &(&2 |> Map.put(&1, Hand.new()))))
     |> set_remaining_bets_to_hands()
   end
 
@@ -101,44 +105,44 @@ def new, do: %__MODULE__{}
 
   defp distribute_cards(game, serve) do
     add_card_function = fn {key, hand} ->
-      {key, %Hand{hand | cards: serve |> Enum.at(key - 1)}}
+      {key, hand |> Hand.set_cards(serve |> Enum.at(key - 1))}
     end
 
     game |> update_hands_using(add_card_function)
   end
 
-  defp start_betting(game), do: game |> change_state(:bet)
-  def change_state(game, state), do: %__MODULE__{game | state: state}
+  defp start_betting(game), do: game |> set_state(:bet)
 
   def change_start_hand(%__MODULE__{cards: cards, hands: hands} = game) do
-    %__MODULE__{game | playing_hand: (cards + (hands - 3)) |> rem(hands) |> add_one}
+    game |> set_playing_hand((cards - 3) |> rem(hands) |> add_one)
   end
 
   defp add_one(number), do: number + 1
 
   def next_play_hand(game),
-    do: %__MODULE__{game | playing_hand: 1 + (game.playing_hand |> rem(game.hands))}
+    do: game |> set_playing_hand(1 + (game.playing_hand |> rem(game.hands)))
 
-  def increase_cards(game), do: %__MODULE__{game | cards: game.cards + 1}
-  def set_remaining_cards_to_cards(game), do: %__MODULE__{game | remaining_cards: game.cards}
-  def set_remaining_bets_to_hands(game), do: %__MODULE__{game | remaining_bets: game.hands}
+  def increase_cards(game), do: game |> set_cards(game.cards + 1)
+  def set_remaining_cards_to_cards(game), do: game |> set_remaining_cards(game.cards)
+  def set_remaining_bets_to_hands(game), do: game |> set_remaining_bets(game.hands)
   # Generic helper
+  # TODO move? and add tests for helpers
   def update_hands_using(game, using) do
     new_in_hands = game.in_hands |> Enum.map(using) |> Enum.into(%{})
     %__MODULE__{game | in_hands: new_in_hands}
   end
 
-  def add_card_to_table(game, card), do: %__MODULE__{game | on_table: game.on_table ++ [card]}
-  def fix_next_round_player(game, player), do: %__MODULE__{game | playing_hand: player}
-  def clear_table(game), do: %__MODULE__{game | on_table: []}
+  def add_card_to_table(game, card), do: game |> set_on_table(game.on_table ++ [card])
+  defdelegate fix_next_round_player(game, player), to: __MODULE__, as: :set_playing_hand
+  def clear_table(game), do: game |> set_on_table([])
 
   def reduce_remaining_cards(game),
-    do: %__MODULE__{game | remaining_cards: game.remaining_cards - 1}
+    do: game |> set_remaining_cards(game.remaining_cards - 1)
 
   def reduce_remaining_bets(game),
-    do: %__MODULE__{game | remaining_bets: game.remaining_bets - 1}
+    do: game |> set_remaining_bets(game.remaining_bets - 1)
 
-  def add_expected_bet(
+  def add_expected_bet( #TODO add test for helpers
         %__MODULE__{in_hands: in_hands, playing_hand: playing_hand} = game,
         bet
       ) do
