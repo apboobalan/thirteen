@@ -4,7 +4,7 @@ defmodule Thirteen.Server do
   """
   alias Thirteen.Play
 
-  @game_timeout 2_000_000
+  @game_timeout 3_000_000
   use GenServer
   def start_link(name), do: GenServer.start_link(__MODULE__, name, name: name |> via_tuple)
   def init(name) do
